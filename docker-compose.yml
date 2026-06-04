@@ -1,0 +1,26 @@
+services:
+  app:
+    build: ./pipeline
+    env_file:
+      - .env.docker
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18
+    env_file:
+      - .env.docker
+    environment:
+      POSTGRES_DB: la_meter_parking
+    volumes:
+      - la_meter_parking_postgres_data:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "root", "-d", "la_meter_parking"]
+      interval: 5s
+      retries: 5
+
+volumes:
+  la_meter_parking_postgres_data:
