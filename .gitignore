@@ -220,8 +220,11 @@ __marimo__/
 
 
 #Yin's list
-.notes
+.notes*
 .DS_Store
 .env
 .env.*
 !.env.example
+*.csv
+.terraform/
+terraform.tfstate*
