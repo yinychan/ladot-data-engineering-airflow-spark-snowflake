@@ -226,5 +226,9 @@ __marimo__/
 .env.*
 !.env.example
 *.csv
+
+# Terraform
 .terraform/
-terraform.tfstate*
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl

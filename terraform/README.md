@@ -12,7 +12,20 @@ The starting point assumes you already have an AWS account. If not, create one.
 - Consistent workflow to provision and manage all of your infrastructure (keeps track of infrastructure)
 - Ensures resources are removed. So you do not continue to be charged for them
 
-## Connecting AWS with Terraform
+## Adding terraform to your current codepsaces session:
+
+```
+# Installation
+sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt-get update && sudo apt-get install -y terraform
+
+# Then, check that it's there
+terraform --version
+```
+
+## Connecting AWS with Terraform using variables
 
 ### IAM users 
 1. Create User button
@@ -118,5 +131,94 @@ terraform {
 # Configure the AWS Provider
 provider "aws" {
   region = var.aws_region
+}
+```
+
+4. Run the AWS export command through your terminal
+```
+export AWS_ACCESS_KEY_ID="your_access_key_id_from_csv"
+export AWS_SECRET_ACCESS_KEY="your_secret_access_key_from_csv"
+export AWS_DEFAULT_REGION="us-west-1"
+```
+
+Then, run the initialization command to download the AWS provider plugin.
+
+```
+terraform init
+```
+
+From the output, you should see text that includes `Terraform has been successfully initialized!`
+
+The AWS provider plugin acts as the translator that turns generic Terraform code into specific AWS API calls.
+
+5. Create the AWS S3 bucket through Terraform. This block provisions the actual storage space where your raw data files will go.
+
+In your `main.tf` file, add 
+
+```
+resource "aws_s3_bucket" "data_lake_bucket" {
+  bucket = var.s3_bucket_name
+  force_destroy = true
+}
+```
+
+`var.s3_bucket_name` should match the variable declared in your `variables.tf` file.
+
+`force_destroy = true` lets Terraform clear out the data and the bucket instantly without you manually deleting millions of rows of data first. We have this setting for this Terraform exercise purposes only.
+
+6. Enable bucket versioning. This block of code tells AWS to retain older variables of an object if a file with the exact same name is uploaded or modified. If your data pipeline overwrites a clean dataset with corrupted data, it allows you to roll back to the previous clean version directly inside S3.
+
+In your `main.tf` file, add 
+
+```
+resource "aws_s3_bucket_versioning" "versioning" {
+  bucket = aws_s3_bucket.data_lake_bucket.id # Reference the S3 bucket created above
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+```
+
+7. Prevent data leaks. This block of code isolates our S3 bucket from the public internet to prevent cloud data leaks.
+
+In your `main.tf` file, add 
+
+```
+resource "aws_s3_bucket_public_access_block" "block_public_access" {
+  bucket = aws_s3_bucket.data_lake_bucket.id
+
+  block_public_acls = true
+  block_public_policy = true
+  ignore_public_acls  = true
+  restrict_public_buckets = true
+}
+```
+
+8. Clean up old buckets (set to 30 days). This block of code will instruct automatic deletion of data files after 30 days. For the purposes of this exercise, we don't need to store data for long.
+
+```
+resource "aws_s3_bucket_lifecycle_configuration" "lifecycle_rules" {
+  bucket = aws_s3_bucket.data_lake_bucket.id
+
+  rule {
+    id = "lifecycle_delete_after_30_days"
+    status = "Enabled"
+
+    expiration {
+      days = 30
+    }
+    filter {
+      prefix = ""
+    }
+  }
+}
+```
+
+9. Add a dataset to AWS Glue
+
+```
+resource "aws_glue_catalog_database" "dataset" {
+  name = var.glue_database_name
 }
 ```

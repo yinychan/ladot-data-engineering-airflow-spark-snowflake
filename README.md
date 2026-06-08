@@ -1,5 +1,5 @@
 # LA Meter Parking Occupancy and Citations
-This is a data engineering project using meter parking occupancy and citations from LADOT Open Data. I will go through the step-by-step process of building an end-to-end data pipeline, starting from configuring an efficient workflow. This is as much for me to integrate what I've learned with what I know as it is to be a helpful resource. Instructions are for macOS.
+This is a data engineering project using meter parking occupancy and citations from LADOT Open Data. I will go through the step-by-step process of building an end-to-end data pipeline, starting from configuring an efficient workflow. This is as much for me to integrate what I've learned with what I know as it is to be a helpful resource. Instructions are for macOS. This is a data engineering exercise with AWS.
 
 ## Workspace Setup
 
@@ -490,11 +490,17 @@ docker network ls
 docker network rm <network_id>
 ```
 
+## Setting up AWS and Terraform
+This section is in the /terraform file directory. It has everything we need to create an AWS S3 bucket and AWS Glue dataset through Terraform. We use Terraform variables to separate our settings from our main code.
+
+[Getting Started with AWS & Terraform](terraform/README.md)
+
+
 ## Coming up
 This project is in progress. Here is what to expect in the coming days and weeks:
 - Writing a python class to run all 3 data ingestions
 - Set up a pgAdmin to make data inspection easier
-- Infrastructure-as-Code using Terraform
+- ~~Infrastructure-as-Code using Terraform~~
 - Workflow orchestration with Kestra
 - Data warehouse on AWS
 - Analytics engineering with dbtCloud
