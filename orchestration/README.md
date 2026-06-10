@@ -1,5 +1,18 @@
+
 ## Date Workflow Orchestration
 We will be setting up Apache Airflow using Docker and working with AWS. Airflow acts as a "centralized control room" for our data engineering pipelines. Instead of running Python extraction scripts on a manual timer or using a cron job, Airflow orchestrates the entire data workflow. 
+
+## Contents
+
+- [Getting Started](#getting-started)
+- [Setting up Airflow](#setting-up-airflow)
+- [Airflow in Docker](#airflow-in-docker)
+- [Docker Compose for Airflow](#docker-compose-for-airflow)
+- [Build Docker Image with Airflow](#build-docker-image-with-airflow)
+- [DAGs](#dags)
+- [Running your DAG](#running-your-dag)
+
+### Getting Started
 
 This setup works with Apache Airflow 3.2.2. If you are using a different Airflow version, especially from Apache 2.x, there will be a number of differences in your docker-compose.yml.  
 
@@ -11,7 +24,6 @@ AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-airflow_jwt_secr
 AIRFLOW__API_AUTH__JWT_ISSUER: ${AIRFLOW__API_AUTH__JWT_ISSUER:-airflow}
 ```
 
-### Getting Started
 Create an `orchestration` folder in your project.
 
 ```
