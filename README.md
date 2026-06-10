@@ -1,6 +1,27 @@
 # LA Meter Parking Occupancy and Citations
 This is a data engineering project using meter parking occupancy and citations from LADOT Open Data. I will go through the step-by-step process of building an end-to-end data pipeline, starting from configuring an efficient workflow. This is as much for me to integrate what I've learned with what I know as it is to be a helpful resource. Instructions are for macOS. This is a data engineering exercise with AWS.
 
+# Contents 
+
+- [Workspace Setup](#workspace-setup)
+  - [Github Codespaces](#github-codespaces)
+  - [VS Code](#vs-code)
+  - [Docker, Python, uv](#docker-python-uv)
+- [Project Setup](#project-setup)
+  - [Project files and dockerization](#project-files-and-dockerization)
+  - [Environment Variables](#environment-variables)
+  - [PostgreSQL in Docker](#postgresql-in-docker)
+- [Data Ingestion](#data-ingestion) (This has its own README)
+- [Docker Compose](#docker-compose) 
+  - [Create](#create)
+  - [Run](#run)
+  - [Check](#check)
+  - [Clean up](#clean-up)
+- [Setting up AWS and Terraform](#setting-up-aws-and-terraform) (This als goes to its own README)
+- [Workflow Orchestration with Apache Airflow 3.2.x](#workflow-orchestration-with-apache-airflow-32) (This goes to its own README)
+- [Coming up](#coming-up) (All my plans for demonstrating this pipeline)
+
+
 ## Workspace Setup
 
 ### Github Codespaces
@@ -290,8 +311,6 @@ An example of a data workflow is Data ingestion > Convert various data formats i
 
 ## Coming up
 This project is in progress. Here is what to expect in the coming days and weeks:
-- Writing a python class to run all 3 data ingestions
-- Set up a pgAdmin to make data inspection easier
 - ~~Infrastructure-as-Code using Terraform~~
 - ~~Workflow orchestration with Apache Airflow~~
 - ~~Write a DAG with Airflow~~
@@ -300,3 +319,4 @@ This project is in progress. Here is what to expect in the coming days and weeks
 - Analytics engineering with dbtCloud
 - Batch processing with Apache Spark and PySpark
 - Building a streaming pipeline (separately)
+- Set up a pgAdmin to make data inspection easier
