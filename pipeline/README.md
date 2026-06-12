@@ -8,6 +8,7 @@ We will be using LA City's Open Data.
 - [Extract the data](#extract-the-data)
 - [Connect to Database](#connect-to-database)
 - [Insert the Data](#insert-the-data)
+- [Extraction Using Socrata API](#extraction-using-socrata-api)
 
 ### The Datasets
 
@@ -17,7 +18,7 @@ https://data.lacity.org/login. Enter it as your `APP_TOKEN` value in your `.env`
 We will be handling 3 datasets
 - [LADOT Metered Parking Inventory & Policies](https://data.lacity.org/Transportation/LADOT-Metered-Parking-Inventory-Policies/s49e-q6j2/about_data)
 - [LADOT Parking Meter Occupancy](https://data.lacity.org/Transportation/LADOT-Parking-Meter-Occupancy/e7h6-4a3e/about_data)
-- [Parking Citations](ohttps://data.lacity.org/Transportation/Parking-Citations/4f5p-udkv/about_data)
+- [Parking Citations](https://data.lacity.org/Transportation/Parking-Citations/4f5p-udkv/about_data)
 
 SODA3 API via Socrata documentation:
 - https://dev.socrata.com/foundry/data.lacity.org/s49e-q6j2 (LADOT Metered Parking Inventory & Policies)
@@ -228,6 +229,111 @@ Success here looks something like this:
 | 9     | HO281B  | 2026 Jun 04 06:01:53 PM | OCCUPIED       |
 +-------+---------+-------------------------+----------------+
 ```
+
+### Extraction Using Socrata API
+
+While `pipeline.py` exemplifies a more generic example of data extraction from a .csv endpoint, the datasets I want to use from LADOT Open Data are powered by [Socrata Open Data API](https://dev.socrata.com/), so I will need my final version to implement with the [sodapy package](https://github.com/afeld/sodapy).
+
+You can reference my `pipeline-sodapy.py` file. A couple notes on that set of code:
+
+1. We're calling the `.get_all()` method to read data over all the results before chunking. We'll see how that performs when reading over 25 million rows for the "Parking Citations" dataset, but for now this works for what we need.
+
+2. We write a function to yield successive chunks of the results as a list we can convert into a DataFrame
+
+```
+# Notice new imports at the top of pipeline-sodapy.py
+...
+from sodapy import Socrata
+from itertools import islice
+import json
+
+...
+def chunked_iterable(iterable, size = 1000):
+    it = iter(iterable)
+    while True:
+        chunk = list(islice(it, size))
+        if not chunk:
+            break
+        yield chunk
+```
+
+3. The main difference with this `pipeline-sodapy.py` script here is we're converting the data into a dataframe _after_ chunking rather than before as we did in `pipeline.py`. The intention is to prevent an out-of-memory crash when we need to run 25 million rows of data. 
+
+A second "fool proof" catch we need to consider for when we run the other datasets, we need to flatten data types that are lists and dictionaries before we insert them into the db.
+
+```
+...
+for chunk in chunked_iterable(results):
+    # Convert the chunk to a DataFrame
+    df_chunk = pd.DataFrame.from_records(chunk)
+    
+    df_chunk = df_chunk.map(
+        lambda x: json.dumps(x) if isinstance(x, (dict, list)) else x # flatten dictionaries and lists into string for to_sql()
+    )
+    ...
+```
+
+4. Let's see how this works out. We run the script using original the meter occupancy dataset.
+
+```
+uv run python pipeline-sodapy.py
+```
+
+Now, let's switch out the dataset ID and dataset name for parking citations
+
+```
+dataset_identifier = "4f5p-udkv"
+dataset_name = "parking_citations"
+```
+
+Run the script again
+
+```
+uv run python pipeline-sodapy.py
+```
+
+Beautiful! You should see it inserting thousands of rows into your local PostgreSQL. Quite literally, thousands of these in your terminal output:
+
+```
+Inserted: 1000
+Inserted: 1000
+Inserted: 1000
+```
+
+Let's just double check in the local db. We'll only look at a few columns and rows at a time (__*important*__). In your terminal within the `pipeline/` directory:
+
+```
+export $(xargs < .env)
+uv run pgcli -h localhost -p $POSTGRES_PORT -u $POSTGRES_USER -d $POSTGRES_D
+# enter password
+
+\dt
+select index, ticket_number, fine_amount, geocodelocation from parking_citations limit 10;
+```
+
+Outout should look something like:
+
+```
+la_meter_parking_db> select index, ticket_number, fine_amount, geocodelocation from parking_ci
+ tations limit 10;
++-------+---------------+-------------+----------------------------------------------------------------+
+| index | ticket_number | fine_amount | geocodelocation                                                |
+|-------+---------------+-------------+----------------------------------------------------------------|
+| 0     | 4602073232    | 68          | {"type": "Point", "coordinates": [-118.29959251, 34.0382668]}  |
+| 1     | 4601302834    | 68          | {"type": "Point", "coordinates": [-118.4310588, 34.16337]}     |
+| 2     | 4601978496    | 63          | {"type": "Point", "coordinates": [-118.260923, 34.05286752]}   |
+| 3     | 4602159520    | 68          | {"type": "Point", "coordinates": [-118.30409538, 33.78880056]} |
+| 4     | 4602061811    | 68          | {"type": "Point", "coordinates": [-118.59280069, 34.20887326]} |
+| 5     | 4601664760    | 63          | {"type": "Point", "coordinates": [-118.27405053, 34.05840158]} |
+| 6     | 4602043423    | 93          | {"type": "Point", "coordinates": [-118.20276478, 34.05680302]} |
+| 7     | 4602639440    | 68          | {"type": "Point", "coordinates": [-118.17533122, 34.06184663]} |
+| 8     | 4602094615    | 58          | {"type": "Point", "coordinates": [-118.25296108, 34.04697011]} |
+| 9     | 4601664771    | 63          | {"type": "Point", "coordinates": [-118.27509548, 34.04401265]} |
++-------+---------------+-------------+----------------------------------------------------------------+
+SELECT 10
+```
+
+Wonderful, it's looking good. You can stop your `pipeline-sodapy.py` execution or allow it to keep running. I'm going to stop it since I'm ready to move to the next step.
 
 ## Back to main
 

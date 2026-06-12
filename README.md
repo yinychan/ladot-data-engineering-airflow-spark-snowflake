@@ -153,7 +153,7 @@ docker run -it \
   -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
   -e POSTGRES_DB="$POSTGRES_DB" \
   -v $(pwd)/$DATA_PERSISTENCE_DIR:/var/lib/postgresql \
-  -p $PORT:$PORT \
+  -p $POSTGRES_PORT:$POSTGRES_PORT \
   postgres:18
 ```
 
@@ -161,7 +161,7 @@ In another terminal window, run:
 ```
 #use environment variables, or connect with your values in place
 export $(xargs < .env)
-uv run pgcli -h localhost -p $PORT -u $POSTGRES_USER -d $POSTGRES_DB
+uv run pgcli -h localhost -p $POSTGRES_PORT -u $POSTGRES_USER -d $POSTGRES_DB
 ```
 
 Give your own password and then you should be in. Let's check
@@ -303,19 +303,36 @@ This section is in the /terraform file directory. It has everything we need to c
 [Getting Started with AWS & Terraform](terraform/README.md)
 
 ## Workflow Orchestration with Apache Airflow 3.2
-### Directed Acyclic Graph
-Data workflow is also called Directed Acyclic Graph (DAG)
-An example of a data workflow is Data ingestion > Convert various data formats into Apache Parquet > Upload to AWS S3
+Here, we go through the entire data workflow starting from getting up and running with Airflow in Docker, writing Airflow tasks with DAGs, data ingestion with the Socrata API, chunking our data, shipping our data off into AWS S3 (Data Lake), and creating an AWS Glue Crawler to get our Parquet data into our AWS Glue Data Catalog database. After which, we can move into actually doing something with our data in Analytics Engineering.
+<!-- Data workflow is also called Directed Acyclic Graph (DAG).
+An example of a data workflow is Data ingestion > Convert various data formats into Apache Parquet > Upload to AWS S3 -->
 
-[Set up workflow orchestration with Airflow](orchestration/README.md)
+This is a pretty extensive and meaty section, so I will link to each part of this exercise:
+
+- [Airflow & DAGs](orchestration/README.md#airflow--dags)
+    - [Getting Started](orchestration/README.md#getting-started)
+    - [Setting up Airflow](orchestration/README.md#setting-up-airflow)
+    - [Airflow in Docker](orchestration/README.md#airflow-in-docker)
+    - [Docker Compose for Airflow](orchestration/README.md#docker-compose-for-airflow)
+    - [Build Docker Image with Airflow](orchestration/README.md#build-docker-image-with-airflow)
+    - [DAGs](orchestration/README.md#dags)
+    - [Running your DAG](orchestration/README.md#running-your-dag)
+
+- [Cloud Data Lake with AWS](orchestration/README.md#cloud-data-lake-with-aws)
+    - [Setting Up](orchestration/README.md#setting-up)
+    - [Modify DAG for AWS S3 Ingestion](orchestration/README.md#modify-dag-for-aws-s3-ingestion)
+    - [Together with Terraform](orchestration/README.md#together-with-terraform)
+    - [Extract & Load All Datasets](orchestration/README.md#extract--load-all-datasets)
+        - [Using Socrata API](orchestration/README.md#using-socrata-api)
+    - [AWS Glue Crawler](orchestration/README.md#aws-glue-crawler) (coming up next)
 
 ## Coming up
 This project is in progress. Here is what to expect in the coming days and weeks:
 - ~~Infrastructure-as-Code using Terraform~~
 - ~~Workflow orchestration with Apache Airflow~~
 - ~~Write a DAG with Airflow~~
-- Alternate Workflow orchestration with Kestra
 - Data warehouse on AWS
+- Alternate Workflow orchestration with Kestra
 - Analytics engineering with dbtCloud
 - Batch processing with Apache Spark and PySpark
 - Building a streaming pipeline (separately)

@@ -107,8 +107,8 @@ touch terraform.tfvars
 ```
 # In terraform.tfvars
 
-aws_region         = "us-west-1" # change this to the region closest to you
-s3_bucket_name     = "meter-parking-DE-project-aws-data-lake-yinychan" # change this to a bucket name matching your project
+aws_region = "us-west-1" # change this to the region closest to you
+s3_bucket_name = "ladot-meter-parking-de-project-aws-data-lake" # change this to a bucket name matching your project
 glue_database_name = "la_meter_parking_data" # change this db name to match your db
 ```
 

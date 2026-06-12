@@ -1,5 +1,12 @@
-# AWS Provider 
+# AWS Provider & SDK
 apache-airflow-providers-amazon
+boto3
+
+# Data Compression & Serialization
+pyarrow
 
 # Core Database Driver required by SQLAlchemy to connect to Postgres 18
 psycopg2-binary
+
+# To connect to the Socrata Open Data API
+sodapy

@@ -22,14 +22,6 @@ meter_occupancy_csv = "https://data.lacity.org/api/v3/views/e7h6-4a3e/export.csv
 meter_occupancy_response = requests.post(meter_occupancy_csv, headers=headers, json=payload_csv, timeout=100)
 meter_occupancy_response.raise_for_status() # Check if the request was successful
 
-#3. put response data into dataframe
-# df = pd.read_csv(StringIO(meter_occupancy_response.text))
-
-#4. Let's make sure we have the data we expect
-# print(df.head())
-# print(df.dtypes)
-# print(df.shape)
-# print(df.columns)
 
 #5. connect to the database
 psql_user = os.getenv("POSTGRES_USER")
