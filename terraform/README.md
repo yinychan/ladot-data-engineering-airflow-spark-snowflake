@@ -270,6 +270,8 @@ resource "aws_glue_catalog_database" "dataset" {
 }
 ```
 
+### AWS Glue Crawler
+
 We also need to set up an IAM role for AWS Glue Crawler (which we later run in our workflow orchestration DAG).
 
 ```
@@ -349,6 +351,58 @@ resource "aws_glue_crawler" "parking_metrics_crawler" {
     update_behavior = "UPDATE_IN_DATABASE"
   }
 }
+```
+
+We need to make sure our `terraform-runner` has permissions to execute this plan. 
+
+In your AWS dashboard > IAM > IAM users > terraform-runner 
+- In the "Permissions" tab, click "Add permissions" > then click "Create inline policy"
+- Select "JSON" in the Policy editor
+- Paste the below:
+
+```
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "SecurePassRoleForGlue",
+			"Effect": "Allow",
+			"Action": "iam:PassRole",
+			"Resource": "arn:aws:iam::486554618187:role/ladot_parking_glue_crawler_role",
+			"Condition": {
+				"StringEquals": {
+					"iam:PassedToService": "glue.amazonaws.com"
+				}
+			}
+		},
+		{
+			"Sid": "AllowTerraformToManageGlueRoles",
+			"Effect": "Allow",
+			"Action": [
+				"iam:CreateRole",
+				"iam:DeleteRole",
+				"iam:GetRole",
+				"iam:UpdateRole",
+				"iam:AttachRolePolicy",
+				"iam:DetachRolePolicy",
+				"iam:GetRolePolicy",
+				"iam:PutRolePolicy",
+				"iam:DeleteRolePolicy"
+			],
+			"Resource": "arn:aws:iam::486554618187:role/ladot_parking_glue_crawler_role"
+		}
+	]
+}
+```
+
+- Click "Next" and save with name `terraform-runner-custom-policy`
+
+Back in your terminal, within your `terraform/` directory,
+
+```
+terraform init
+terraform plan
+terraform apply -auto-approve
 ```
 
 ## In summary

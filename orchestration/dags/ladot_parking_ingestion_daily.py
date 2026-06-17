@@ -46,6 +46,10 @@ class IngestionEngine:
 
                 print(f"Fetched rows {offset} to {offset + chunk_size} in {self.dataset_name}")
                 
+                ## For dev purposes, we'll only run a couple chunks
+                if i > 5:
+                    break
+                
                 if not chunked or len(chunked) == 0:
                     break
 
@@ -142,8 +146,12 @@ def ladot_parking_ingestion_daily():
 
     trigger_aws_glue_crawler = GlueCrawlerOperator(
         task_id="trigger_aws_glue_crawler",
-        crawler_name="ladot_parking_metrics_crawler",
-        aws_conn_id="aws_default"
+        aws_conn_id="aws_default",
+        wait_for_completion=True, 
+        poll_interval=15,
+        config={
+            "Name": "ladot_parking_metrics_crawler"
+        }
     )
 
     # Instantiate the task(s)

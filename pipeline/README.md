@@ -4,13 +4,13 @@ We will be using LA City's Open Data.
 
 ## Contents
 
-- [The Datasets](#the-datasets)
+- [Data sources and API docs](#data-sources-and-api-docs)
 - [Extract the data](#extract-the-data)
 - [Connect to Database](#connect-to-database)
 - [Insert the Data](#insert-the-data)
 - [Extraction Using Socrata API](#extraction-using-socrata-api)
 
-### The Datasets
+### Data sources and API docs
 
 Sign Up and generate their API Token:
 https://data.lacity.org/login. Enter it as your `APP_TOKEN` value in your `.env`.

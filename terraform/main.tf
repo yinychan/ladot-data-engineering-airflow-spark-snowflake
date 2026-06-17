@@ -71,7 +71,7 @@ resource "aws_iam_role" "glue_crawler_role" {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          Service = "://amazonaws.com"
+          Service = "glue.amazonaws.com"
         }
       }
     ]
@@ -113,7 +113,7 @@ resource "aws_iam_role_policy" "glue_s3_access_policy" {
 resource "aws_glue_crawler" "parking_metrics_crawler" {
   database_name = aws_glue_catalog_database.dataset.name
   name = "ladot_parking_metrics_crawler"
-  role = aws_iam_role.glue_crawler_role.name
+  role = aws_iam_role.glue_crawler_role.arn
 
   s3_target {
     path = "s3://${aws_s3_bucket.data_lake_bucket.bucket}"

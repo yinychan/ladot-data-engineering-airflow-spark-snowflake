@@ -723,12 +723,42 @@ A couple measures of success here:
 
 ### AWS Glue Crawler
 
+First, we need to ensure our [Terraform setup](/terraform/README.md#aws-glue-crawler) includes an IAM role for the Glue Crawler, an AWSGlueServiceRole policy, and the creation of Glue Crawler.
+
+Then, let's set up the Glue Crawler in our DAG:
+
 1. Import `GlueCrawlerOperator` to your DAG.
 
 ```
 # Top of ladot_parking_ingestion_daily.py
 from airflow.providers.amazon.aws.operators.glue_crawler import GlueCrawlerOperator
 ```
+
+2. Add the Glue Crawler task in `ladot_parking_ingestion_daily.py`:
+
+```
+# After the last ingestion @task
+trigger_aws_glue_crawler = GlueCrawlerOperator(
+    task_id="trigger_aws_glue_crawler",
+    aws_conn_id="aws_default",
+    config={
+        "Name": "ladot_parking_metrics_crawler"  # ⚡ Capital 'N' matches the official AWS API parameter!
+    }
+)
+```
+
+3. Add the crawler trigger at the end of the dependency chain:
+
+```
+# Around Line 155
+run_meter_occupancy_data >> run_parking_inventory_policies_data >> run_parking_citations_data >> trigger_aws_glue_crawler
+```
+
+#### Completed Extract and Load
+
+In your AWS dashboard, check that these parquet files have been moved to Glue tables: AWS Glue > Tables.
+
+Awesome! You have completed the "Extract" and "Load" portions of the project.
 
 ## Back to main
 
