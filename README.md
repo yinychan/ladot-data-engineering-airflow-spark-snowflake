@@ -1,4 +1,4 @@
-# LA Parking Intelligence Pipeline
+# LADOT Parking Data Engineering End-to-End Pipeline
 This is a data engineering pipeline that analyzes LADOT meter parking occupancy, citations, and inventory from LADOT Open Data. It reveals where open metered parking and which spaces have a higher likelihood of enforcement.
 
 I provide the step-by-step process of building an end-to-end data pipeline, starting from configuring an efficient workflow. The full implementation stack includes AWS Glue, AWS S3, Apache Airflow 3.2.x, Terraform, Socrata API, Python, SQL, Docker, Codespaces, VS Code. Instructions are written for macOS. 
@@ -305,7 +305,7 @@ docker network prune
 ## Setting up AWS and Terraform
 This section is in the /terraform file directory. It has everything we need to create an AWS S3 bucket and AWS Glue dataset through Terraform. We use Terraform variables to separate our settings from our main code.
 
-[Getting Started with AWS & Terraform](terraform/README.md)
+[Infrastructure as Code with AWS & Terraform](terraform/README.md)
 
 ## Workflow Orchestration with Apache Airflow 3.2
 Here, we go through the entire data workflow starting from getting up and running with Airflow in Docker, writing Airflow tasks with DAGs, data ingestion with the Socrata API, chunking our data, shipping our data off into AWS S3 (Data Lake), and creating an AWS Glue Crawler to get our Parquet data into our AWS Glue Data Catalog database. After which, we can move into actually doing something with our data in Analytics Engineering.
