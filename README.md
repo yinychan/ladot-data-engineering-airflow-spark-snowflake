@@ -22,7 +22,8 @@ I provide the step-by-step process of building an end-to-end data pipeline, star
 - [Setting up AWS and Terraform](#setting-up-aws-and-terraform) (This als goes to its own README)
 - [Workflow Orchestration with Apache Airflow 3.2.x](#workflow-orchestration-with-apache-airflow-32) (This goes to its own README)
 - [Data Warehouse on Snowflake](#data-warehouse-on-snowflake)
-- [Coming up](#coming-up) (All my plans for demonstrating this pipeline)
+- [Batch Processing with Spark](#)
+- [Coming up](#coming-up) (Remaining plans for demonstrating this pipeline)
 
 
 ## Workspace Setup
@@ -346,7 +347,21 @@ We configure our data warehouse infrastructure with Snowflake, staged to connect
 - [Snowflake Architecture](/warehouse/README.md#snowflake-architecture)
     - [Secure Cloud Authentication](/warehouse/README.md#secure-cloud-authentication)
 
-## Next up: Batch Processing and Analytics Engineering
+## Batch processing with Apache Spark and PySpark
+
+This section is in progress, but you can preview what I have set up so far:
+
+- [Overview](/batch-processing/README.md#overview)
+    - [Batch vs Stream](/batch-processing/README.md#batch-vs-stream)
+    - [Data Cleaning](/batch-processing/README.md#data-cleaning)
+- [Setting Up Spark and PySpark](/batch-processing/README.md#setting-up-spark-and-pyspark)
+    - [Installation Prerequisites](/batch-processing/README.md#installation-prerequisites)
+    - [Prepare for Processing Script](/batch-processing/README.md#prepare-for-processing-script)
+- [Planning](/batch-processing/README.md#planning)
+    - [Re-typing](/batch-processing/README.md#re-typing)
+    - [Spark Data Schema](/batch-processing/README.md#spark-data-schema)
+
+## Next up: Analytics Engineering with Apache Spark and PySpark
 We will implement batch processing and analytics engineering with Apache Spark. Because of the raw public data we pulled from LADOT's API via Socrata, our data was extracted into Parquet files as standard text strings. We will run a local environment of Spark to read the Parquet files and re-type the fields into their original datatypes of numbers and dates.
 
 ## Coming up
@@ -355,7 +370,7 @@ This project is in progress. Here is what to expect in the coming days and weeks
 - ~~Workflow orchestration with Apache Airflow~~
 - ~~Write a DAG with Airflow~~
 - ~~Data warehouse on Snowflake~~
-- Analytics engineering with Apache Spark and PySpark
 - Batch processing with Apache Spark and PySpark
+- Analytics engineering with Apache Spark and PySpark
 - Modeling with Star Schema
 - Data Analytics & Machine Learning

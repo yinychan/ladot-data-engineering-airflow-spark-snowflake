@@ -1,0 +1,11 @@
+[project]
+name = "batch-processing"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "pandas>=3.0.3",
+    "pyspark>=4.1.2",
+    "sodapy>=2.2.0",
+]
