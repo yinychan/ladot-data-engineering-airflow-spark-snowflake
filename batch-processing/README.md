@@ -13,6 +13,7 @@ Since our source data came from Scorata API, our fields were provided to us as s
 - [Planning](#planning)
     - [Re-typing](#re-typing)
     - [Spark Data Schema](#spark-data-schema)
+- [Reading From S3](#reading-from-s3)
 
 ## Overview 
 
@@ -168,7 +169,7 @@ __1. Gather data structure from source data__
     - body_style_desc (Text)
     - color_desc (Text)
 
-__2. Define exact mapping using PySpark__
+__2. Define current Schema using PySpark__
 
 In `clean_datasets_job.py`, write:
 
@@ -185,14 +186,14 @@ parking_inventory_policies_schema = types.StructType([
 
 meter_occupancy_schema = types.StructType([
     types.StructField('spaceid', types.StringType(), True),
-    types.StructField('eventtime', types.TimestampType(), True),
+    types.StructField('eventtime', types.StringType(), True), # We will need to convert this column to a TIMESTAMP_NTZ(9) in Snowflake
     types.StructField('occupancystate', types.StringType(), True)
 ])
 
 parking_citations_schema = types.StructType([
     types.StructField('ticket_number', types.StringType(), True),
-    types.StructField('issue_date', types.TimestampType(), True),
-    types.StructField('issue_time', types.StringType(), True), # We will need to left-pad this column with zeros to make it a 4-digit string before converting to a DecimalType(4, 0) in Snowflake
+    types.StructField('issue_date', types.StringType(), True), # We will need to convert this column to a TIMESTAMP_NTZ(9) in Snowflake
+    types.StructField('issue_time', types.StringType(), True), # We will need to left-pad this column with zeros to make it a 4-digit string before converting to a NUMBER(4,0) in Snowflake
     types.StructField('meter_id', types.StringType(), True),
     types.StructField('marked_time', types.StringType(), True),
     types.StructField('rp_state_plate', types.StringType(), True),
@@ -202,15 +203,15 @@ parking_citations_schema = types.StructType([
     types.StructField('color', types.StringType(), True),
     types.StructField('location', types.StringType(), True),
     types.StructField('route', types.StringType(), True),
-    types.StructField('agency', types.DecimalType(), True),
+    types.StructField('agency', types.StringType(), True), # We will need to convert this column to a IntegerType() in Snowflake
     types.StructField('violation_code', types.StringType(), True),
     types.StructField('violation_description', types.StringType(), True),
-    types.StructField('fine_amount', types.DecimalType(), True),
+    types.StructField('fine_amount', types.StringType(), True), # We will need to convert this column to a DecimalType(10, 2) in Snowflake
     types.StructField('agency_desc', types.StringType(), True),
     types.StructField('color_desc', types.StringType(), True),
     types.StructField('body_style_desc', types.StringType(), True),
-    types.StructField('loc_lat', types.DoubleType(), True),
-    types.StructField('loc_long', types.DoubleType(), True),
+    types.StructField('loc_lat', types.StringType(), True), # We will need to convert this column to a DoubleType() in Snowflake
+    types.StructField('loc_long', types.StringType(), True), # We will need to convert this column to a DoubleType() in Snowflake
     types.StructField('geocodelocation', types.StringType(), True), # to be created as a VARIANT column in Snowflake
 ])
 ```
@@ -282,8 +283,182 @@ Facts:
 
 ## Reading From S3
 
+__1. Create .env variables__
 
+```
+# In your terminal
+touch .env
 
-### Partitioning
+uv add python-dotenv
+```
 
-`PARTITIONED BY` clause
+In your `.env` file, add the following keys along with your values:
+
+```
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_S3_BUCKET=
+```
+
+In your `clean_datasets_job.py` file, read your environment variables
+
+```
+...
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")  
+aws_s3_bucket = os.getenv("AWS_S3_BUCKET")
+...
+```
+
+__2. Configure Hadoop__
+
+Even though we're running Apache Spark locally, Spark still uses Hadoop core libraries as its primary storage file-system interface. Let's config Hadoop to make a connection to S3. We are also using Hadoop's highly optimized file system driver called `s3a`.
+
+```
+spark = SparkSession.builder \
+    .master("local[*]") \
+    .appName(aws_s3_bucket) \  # we can name our app the same as our bucket for consistency
+    .config("spark.jars.packages", 
+        "org.apache.hadoop:hadoop-aws:3.4.1,"
+        "com.amazonaws:aws-java-sdk-bundle:1.12.262") \
+    .getOrCreate()
+
+hadoop_conf = spark.sparkContext._jsc.hadoopConfiguration()
+
+... # I have my data schema definitions here
+
+data_lake_path = f"s3a://{aws_s3_bucket}/"
+df_policies = spark.read.schema(parking_inventory_policies_schema).parquet(f"{data_lake_path}/parking_inventory_policies/")
+df_occupancy = spark.read.schema(meter_occupancy_schema).parquet(f"{data_lake_path}/meter_occupancy/")
+df_citations = spark.read.schema(parking_citations_schema).parquet(f"{data_lake_path}/parking_citations/")
+```
+
+__3. Test run the connection__
+
+In your terminal:
+
+```
+uv run python clean_datasets_job.py
+```
+
+A few key items you should see to indicate successful dependency resolution:
+
+```
+downloading https://repo1....
+[SUCCESSFUL ] org.apache.hadoop#hadoop-aws;3.4.1!hadoop-aws.jar (125ms)
+downloading https://repo1....
+[SUCCESSFUL ] com.amazonaws#aws-java-sdk-bundle;1.12.262!aws-java-sdk-bundle.jar (7811ms)
+downloading https://repo1....
+[SUCCESSFUL ] software.amazon.awssdk#bundle;2.24.6!bundle.jar (8560ms)
+downloading https://repo1....
+[SUCCESSFUL ] org.wildfly.openssl#wildfly-openssl;1.1.3.Final!wildfly-openssl.jar (166ms)
+```
+
+I got a couple warnings I can safely ignore:
+
+```
+# standard when running Hadoop on MacOS
+WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+
+...
+
+# utility warning, Spark muting verbose debug logs
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+```
+
+No erros or exceptions thrown. It looks like I'm good to move forward.
+
+## Write Cleaning Transformations
+
+In our case here, there is only 1 task to clean, which is to ensure `issue_time` values are consistently 4 digits before re-typing back to `DecimalType(4,0)` within Snowflake.
+
+```
+...
+
+df_citations_cleaned = df_citations \
+    .withColumn(
+        "issue_time", 
+        F.lpad(F.col("issue_time"), 4, "0")
+    ) \
+    .withColumn(
+        "issue_date",
+        F.to_timestamp(F.col("issue_date"))
+    ) \
+    .withColumn(
+        "agency",
+        F.col("agency").cast(types.IntegerType())
+    ) \
+    .withColumn(
+        "fine_amount",
+        F.col("fine_amount").cast(types.DecimalType(10, 2))
+    ) \
+    .withColumn(
+        "loc_lat",
+        F.col("loc_lat").cast(types.DoubleType())
+    ) \
+    .withColumn(
+        "loc_long",
+        F.col("loc_long").cast(types.DoubleType())
+    )
+
+df_occupancy_cleaned = df_occupancy \
+    .withColumn(
+        "eventtime",
+        F.to_timestamp(F.col("eventtime"))
+    )
+```
+
+## Store Cleaned Datasets (Silver)
+
+We write the re-typed and cleaned dataframes back to S3. In `clean_datasets_job.py`:
+
+```
+...
+
+df_policies.write.mode("overwrite").parquet(f"{data_lake_path}/silver/parking_inventory_policies/")
+df_occupancy_cleaned.write.mode("overwrite").parquet(f"{data_lake_path}/silver/meter_occupancy/")
+df_citations_cleaned.write.mode("overwrite").parquet(f"{data_lake_path}/silver/parking_citations/")
+```
+
+Keep in mind there are 3 re-type tasks we still need to do, but in the Snowflake end:
+
+1. In `parking_inventory_policies_schema` > `latlng` is to be created as a VARIANT column.
+2. In `parking_citations_schema` > `issue_time` will need to be converting to a NUMBER(4,0) in Snowflake to keep the miliarty time format e.g. 0100
+3. In `parking_citations_schema` > `geocodelocation` is to be created as a VARIANT column.
+
+Great, we should be ready to get this cleaned and sent to S3. In your terminal:
+
+```
+uv run python clean_datasets_job.py
+```
+
+#### Success!
+
+My terminal output looks something like this:
+
+```
+...
+
+26/07/03 10:29:53 WARN MemoryManager: Total allocation exceeds 95.00% (1,020,054,720 bytes) of heap memory
+Scaling row group sizes to 95.00% for 8 writers
+[Stage 2:===================================>                   (189 + 8) / 294]
+```
+
+This means Spark is chunking the process and successfully running the script.
+
+Additionally, you can check for a `_SUCCESS` file flag in your S3 directories. Log into you AWS dashboard and navigate to your S3 bucket. Click into your bucket directory to locate the `_SUCCESS` files.
+
+For me, they were found here: 
+
+```
+Amazon S3 > Buckets > ladot-meter-parking-de-project-aws-data-lake > silver/ > meter_occupancy/ > _SUCCESS
+Amazon S3 > Buckets > ladot-meter-parking-de-project-aws-data-lake > silver/ > parking_citations/ > _SUCCESS
+Amazon S3 > Buckets > ladot-meter-parking-de-project-aws-data-lake > silver/ > parking_inventory_policies/ > _SUCCESS
+```

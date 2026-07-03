@@ -529,7 +529,7 @@ Within your S3 bucket should be the Parquet with a filename equivalent of `f"met
 
 If you see it there, it's a success!
 
-### Extract & Load All Datasets
+### Extract & Load All Datasets (Bronze)
 
 Great! Our DAG-to-AWS works well. Let's get it set up for the other 2 LADOT datasets we are going to work with.
 
