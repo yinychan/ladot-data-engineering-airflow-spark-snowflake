@@ -14,6 +14,8 @@ Since our source data came from Scorata API, our fields were provided to us as s
     - [Re-typing](#re-typing)
     - [Spark Data Schema](#spark-data-schema)
 - [Reading From S3](#reading-from-s3)
+- [Write Re-Type and Clean Transformations](#write-re-type-and-clean-transformations)
+- [Store Cleaned Datasets (Silver)](#store-cleaned-datasets-silver)
 
 ## Overview 
 
@@ -375,9 +377,13 @@ SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further detail
 
 No erros or exceptions thrown. It looks like I'm good to move forward.
 
-## Write Cleaning Transformations
+## Write Re-Type and Clean Transformations
 
-In our case here, there is only 1 task to clean, which is to ensure `issue_time` values are consistently 4 digits before re-typing back to `DecimalType(4,0)` within Snowflake.
+We re-type and clean what we can in Spark. Later, there will be 3 remaining re-type tasks we still need to do in the Snowflake end:
+
+1. In `parking_inventory_policies_schema` > `latlng` is to be created as a VARIANT column.
+2. In `parking_citations_schema` > `issue_time` will need to be converting to a NUMBER(4,0) in Snowflake to keep the miliarty time format e.g. 0100
+3. In `parking_citations_schema` > `geocodelocation` is to be created as a VARIANT column.
 
 ```
 ...
@@ -427,12 +433,6 @@ df_occupancy_cleaned.write.mode("overwrite").parquet(f"{data_lake_path}/silver/m
 df_citations_cleaned.write.mode("overwrite").parquet(f"{data_lake_path}/silver/parking_citations/")
 ```
 
-Keep in mind there are 3 re-type tasks we still need to do, but in the Snowflake end:
-
-1. In `parking_inventory_policies_schema` > `latlng` is to be created as a VARIANT column.
-2. In `parking_citations_schema` > `issue_time` will need to be converting to a NUMBER(4,0) in Snowflake to keep the miliarty time format e.g. 0100
-3. In `parking_citations_schema` > `geocodelocation` is to be created as a VARIANT column.
-
 Great, we should be ready to get this cleaned and sent to S3. In your terminal:
 
 ```
@@ -462,3 +462,150 @@ Amazon S3 > Buckets > ladot-meter-parking-de-project-aws-data-lake > silver/ > m
 Amazon S3 > Buckets > ladot-meter-parking-de-project-aws-data-lake > silver/ > parking_citations/ > _SUCCESS
 Amazon S3 > Buckets > ladot-meter-parking-de-project-aws-data-lake > silver/ > parking_inventory_policies/ > _SUCCESS
 ```
+
+## Write Target Staging Tables inside Snowflake
+
+### Planning
+
+We need to make note of a few data mappings to move between Spark and Snowflake:
+
+1. Match Spark data types with Snowflake's native SQL data types:
+
+- TimestampType() -> TIMESTAMP
+- IntegerType() -> INTEGER
+- DecimalType() -> NUMBER(10,2)
+- DoubleType() -> DOUBLE
+- StringType() -> VARCHAR
+
+2. Apply `VARIANT` type for `latlang` and `geocodelocation`.
+
+### Data Definition Language (DDL)
+
+Let's write the `CREATE TABLE` scripts for all 3 of our datasets before placing them in our Snowflake workspace. 
+
+1. Staging Table for Meter Parking Inventory Policies
+```
+CREATE TABLE staging_parking_inventory_policies (
+    spaceid VARCHAR,
+    blockface VARCHAR,
+    metertype VARCHAR,
+    ratetype VARCHAR,
+    raterange VARCHAR,
+    timelimit VARCHAR,
+    latlng VARIANT
+);
+```
+
+2. Staging Table for Meter Occupancy
+```
+CREATE TABLE staging_meter_occupancy (
+    spaceid VARCHAR,
+    eventtime TIMESTAMP,
+    occupancystate VARCHAR
+);
+```
+
+3. Staging Table for Meter Parking Citations
+```
+CREATE TABLE staging_parking_citations (
+    ticket_number VARCHAR,
+    issue_date TIMESTAMP,
+    issue_time VARCHAR, -- We will retype this at a later stage
+    meter_id VARCHAR,
+    marked_time VARCHAR,
+    rp_state_plate VARCHAR,
+    plate_expiry_date VARCHAR,
+    make VARCHAR,
+    body_style VARCHAR,
+    color VARCHAR,
+    location VARCHAR,
+    route VARCHAR,
+    agency INTEGER,
+    violation_code VARCHAR,
+    violation_description VARCHAR,
+    fine_amount NUMBER(10,2),
+    agency_desc VARCHAR,
+    color_desc VARCHAR,
+    body_style_desc VARCHAR,
+    loc_lat DOUBLE,
+    loc_long DOUBLE,
+    geocodelocation VARIANT  
+);
+```
+
+#### Success!
+
+In your Snowflake console, you should see `Table STAGING_PARKING_CITATIONS successfully created.` upon succes.
+
+### SQL Ingestion Script
+
+Now, we connect our Snowflake staging tables to S3 and copy from S3. Remember from our Data Warehouse phase, we [created a stage called `silver_stage`](/warehouse/README.md#secure-cloud-authentication).
+
+We use `PATTERN` to filter out non-parquet files.
+
+```
+COPY INTO staging_parking_inventory_policies 
+FROM (
+    SELECT
+        $1:spaceid::VARCHAR,
+        $1:blockface::VARCHAR,
+        $1:metertype::VARCHAR,
+        $1:ratetype::VARCHAR,
+        $1:raterange::VARCHAR,
+        $1:timelimit::VARCHAR,
+        $1:latlang::VARIANT
+    FROM @silver_stage/parking_inventory_policies/
+)
+PATTERN = '.*part-.*\.parquet';
+
+COPY INTO staging_meter_occupancy
+FROM (
+    SELECT
+        $1:spaceid::VARCHAR,
+        $1:eventtime::TIMESTAMP,
+        $1:occupancystate::VARCHAR
+    FROM @silver_stage/meter_occupancy/
+)
+PATTERN = '.*part-.*\.parquet';
+
+COPY INTO staging_parking_citations 
+FROM (
+  SELECT 
+    $1:ticket_number::VARCHAR,
+    $1:issue_date::TIMESTAMP,
+    $1:issue_time::VARCHAR, -- Preserves your clean 4-character padding string layout
+    $1:meter_id::VARCHAR,
+    $1:marked_time::VARCHAR,
+    $1:rp_state_plate::VARCHAR,
+    $1:plate_expiry_date::VARCHAR,
+    $1:make::VARCHAR,
+    $1:body_style::VARCHAR,
+    $1:color::VARCHAR,
+    $1:location::VARCHAR,
+    $1:route::VARCHAR,
+    $1:agency::INTEGER,
+    $1:violation_code::VARCHAR,
+    $1:violation_description::VARCHAR,
+    $1:fine_amount::NUMBER(10,2),
+    $1:agency_desc::VARCHAR,
+    $1:color_desc::VARCHAR,
+    $1:body_style_desc::VARCHAR,
+    $1:loc_lat::DOUBLE,
+    $1:loc_long::DOUBLE,
+    $1:geocodelocation::VARIANT
+  FROM @silver_stage/parking_citations/
+)
+PATTERN = '.*part-.*\.parquet';
+```
+
+Run these in your Snowflake workspace. Because we're dealing with millions of rows for the parking citations dataset, the process will take a while (a handful of minutes for me).
+
+#### Success!
+
+Your Snowflake console should indicate something like `294 (chunks) s3://[bucket]/silver/[directory]/*.parquet LOADED 520000 ... etc` listing out all the chunks and total number of rows processed. 
+
+Aamzing, we're done with the Batch Processing phase now.
+
+## Back to main
+
+Excellent, you can [continue back at the main project](../README.md).
