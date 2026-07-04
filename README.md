@@ -19,10 +19,10 @@ I provide the step-by-step process of building an end-to-end data pipeline, star
   - [Run](#run)
   - [Check](#check)
   - [Clean up](#clean-up)
-- [Setting up AWS and Terraform](#setting-up-aws-and-terraform) (This als goes to its own README)
+- [Setting up AWS and Terraform](#setting-up-aws-and-terraform) (This goes to its own README)
 - [Workflow Orchestration with Apache Airflow 3.2.x](#workflow-orchestration-with-apache-airflow-32) (This goes to its own README)
-- [Data Warehouse on Snowflake](#data-warehouse-on-snowflake)
-- [Batch processing with Apache Spark and PySpark](#batch-processing-with-apache-spark-and-pyspark)
+- [Data Warehouse on Snowflake](#data-warehouse-on-snowflake) (Goes to its own README)
+- [Batch processing with Apache Spark and PySpark](#batch-processing-with-apache-spark-and-pyspark) (Goes to its own README)
 - [Coming up](#coming-up) (Remaining plans for demonstrating this pipeline)
 
 
