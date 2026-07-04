@@ -13,9 +13,14 @@ Since our source data came from Scorata API, our fields were provided to us as s
 - [Planning](#planning)
     - [Re-typing](#re-typing)
     - [Spark Data Schema](#spark-data-schema)
+    - [Dimension and Fact Tables](#dimension-and-fact-tables)
 - [Reading From S3](#reading-from-s3)
 - [Write Re-Type and Clean Transformations](#write-re-type-and-clean-transformations)
 - [Store Cleaned Datasets (Silver)](#store-cleaned-datasets-silver)
+- [Write Target Staging Tables inside Snowflake](#write-target-staging-tables-inside-snowflake)
+    - [Data Mapping](#data-mapping)
+    - [Data Definition Language (DDL)](#data-definition-language-ddl)
+    - [SQL Ingestion Script](#sql-ingestion-script)
 
 ## Overview 
 
@@ -465,7 +470,7 @@ Amazon S3 > Buckets > ladot-meter-parking-de-project-aws-data-lake > silver/ > p
 
 ## Write Target Staging Tables inside Snowflake
 
-### Planning
+### Data Mapping
 
 We need to make note of a few data mappings to move between Spark and Snowflake:
 
