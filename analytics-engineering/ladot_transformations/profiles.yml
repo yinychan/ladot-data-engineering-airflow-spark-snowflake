@@ -1,0 +1,13 @@
+ladot_transformations:
+  outputs:
+    dev:
+      account: EBEPBKE-BFB08318
+      database: LADOT_WAREHOUSE
+      private_key_path: /Users/ahguay/.dbt/dbt_snowflake_key.p8
+      role: accountadmin
+      schema: core
+      threads: 1
+      type: snowflake
+      user: yinychan
+      warehouse: COMPUTE_WH
+  target: dev

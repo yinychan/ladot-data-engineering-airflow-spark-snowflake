@@ -23,7 +23,8 @@ I provide the step-by-step process of building an end-to-end data pipeline, star
 - [Workflow Orchestration with Apache Airflow 3.2.x](#workflow-orchestration-with-apache-airflow-32) (This goes to its own README)
 - [Data Warehouse on Snowflake](#data-warehouse-on-snowflake) (Goes to its own README)
 - [Batch processing with Apache Spark and PySpark](#batch-processing-with-apache-spark-and-pyspark) (Goes to its own README)
-- [Coming up](#coming-up) (Remaining plans for demonstrating this pipeline)
+- [Analytics Engineering and Modeling with Star Schema](#analytics-engineering-and-modeling-with-star-schema) (Goes to its own README)
+- [Coming Up: Data Analytics & Machine Learning](#coming-up-data-analytics--machine-learning)
 
 
 ## Workspace Setup
@@ -361,7 +362,7 @@ This section is in progress, but you can preview what I have set up so far:
     - [Re-typing](/batch-processing/README.md#re-typing)
     - [Spark Data Schema](/batch-processing/README.md#spark-data-schema)
     - [Dimension and Fact Tables](/batch-processing/README.md#dimension-and-fact-tables)
-- [Reading From S3](/batch-processing/README.md#reading-from-s3)
+- [Reading From AWS S3](/batch-processing/README.md#reading-from-aws-s3)
 - [Write Re-Type and Clean Transformations](/batch-processing/README.md#write-re-type-and-clean-transformations)
 - [Store Cleaned Datasets (Silver)](/batch-processing/README.md#store-cleaned-datasets-silver)
 - [Write Target Staging Tables inside Snowflake](/batch-processing/README.md#write-target-staging-tables-inside-snowflake)
@@ -369,15 +370,18 @@ This section is in progress, but you can preview what I have set up so far:
     - [Data Definition Language (DDL)](/batch-processing/README.md#data-definition-language-ddl)
     - [SQL Ingestion Script](/batch-processing/README.md#sql-ingestion-script)
 
-## Next up: Analytics Engineering and Modeling with Star Schema
-We will implement batch processing and analytics engineering with Apache Spark and Snowflake. Because of the raw public data we pulled from LADOT's API via Socrata, our data was extracted into Parquet files as standard text strings. We will run a local environment of Spark to read the Parquet files and re-type the fields into their original datatypes of numbers and dates.
+## Analytics Engineering and Modeling with Star Schema
+We implement analytics engineering with Star Schema by planning and creating dimension and fact tables. 
 
-## Coming up
-This project is in progress. Here is what to expect in the coming days and weeks:
-- ~~Infrastructure-as-Code using Terraform~~
-- ~~Workflow orchestration with Apache Airflow~~
-- ~~Write a DAG with Airflow~~
-- ~~Data warehouse on Snowflake~~
-- ~~Batch processing with Apache Spark and PySpark~~
-- Analytics Engineering and Modeling with Star Schema
-- Data Analytics & Machine Learning
+- [Planning](/analytics-engineering/README.md#planning)
+    - [Dimension and Fact Tables](/analytics-engineering/README.md#dimension-and-fact-tables)
+    - [Setting up dbt](/analytics-engineering/README.md#setting-up-dbt-data-build-tool)
+    - [Initialize a new project](/analytics-engineering/README.md#initialize-a-new-project)
+    - [Create File Structure](/analytics-engineering/README.md#create-file-structure)
+- [Staging](/analytics-engineering/README.md#staging)
+- [Dimension Tables](/analytics-engineering/README.md#dimension-tables)
+    - [Execute](/analytics-engineering/README.md#execute)
+    - [Repeat with remaining dimension tables](/analytics-engineering/README.md#repeat-with-remaining-dimension-tables)
+- [Fact Tables](/analytics-engineering/README.md#fact-tables)
+
+## Coming Up: Data Analytics & Machine Learning

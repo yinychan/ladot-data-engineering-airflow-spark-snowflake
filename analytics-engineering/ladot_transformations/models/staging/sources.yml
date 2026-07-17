@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: raw_ladot
+    database: ladot_warehouse
+    schema: core
+    tables:
+      - name: staging_meter_occupancy
+      - name: staging_parking_inventory_policies
+      - name: staging_parking_citations

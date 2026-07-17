@@ -13,8 +13,7 @@ Since our source data came from Scorata API, our fields were provided to us as s
 - [Planning](#planning)
     - [Re-typing](#re-typing)
     - [Spark Data Schema](#spark-data-schema)
-    - [Dimension and Fact Tables](#dimension-and-fact-tables)
-- [Reading From S3](#reading-from-s3)
+- [Reading From AWS S3](#reading-from-aws-s3)
 - [Write Re-Type and Clean Transformations](#write-re-type-and-clean-transformations)
 - [Store Cleaned Datasets (Silver)](#store-cleaned-datasets-silver)
 - [Write Target Staging Tables inside Snowflake](#write-target-staging-tables-inside-snowflake)
@@ -223,72 +222,7 @@ parking_citations_schema = types.StructType([
 ])
 ```
 
-### Dimension and Fact Tables
-
-We won't need this yet, but while we're here looking at our original data structure, let's also see how we'd want our dimension tables and fact tables to be structured for future anaytics tasks.
-
-Dims:
-- dim_vehicles (GROUP BY or SELECT DISTINCT to deduplicate)
-    - MD5 primary key
-    - rp_state_plate
-    - plate_expiry_date
-    - make
-    - body_style_desc
-    - color_desc
-
-- dim_meter
-    - meter_key (from fields spaceid, but we'll assume is same as meter_id)
-    - meter_type
-    - rate_type
-    - rate_range
-    - time_limit
-    - location_key
-
-- dim_location (lat/lan/geolocation) (GROUP BY or SELECT DISTINCT to deduplicate)
-    - location_key
-    - address_number_street (from fields location and blockface)
-    - latitude
-    - longitude
-
-- dim_agency (GROUP BY or SELECT DISTINCT to deduplicate)
-    - aagency_key VARCHAR PRIMARY KEY (agency field from source)
-    - description
-    
-- dim_date (GROUP BY or SELECT DISTINCT to deduplicate)
-    - date_key DATE PRIMARY KEY (native date key for fast partition pruning)
-    - day
-    - month
-    - year
-
-- dim_time_of_day (GROUP BY or SELECT DISTINCT to deduplicate)
-    - time_key TIME PRIMARY KEY (native time key)
-    - hour_number INT
-    - minute_number INT
-
-- Violation (GROUP BY or SELECT DISTINCT to deduplicate)
-    - MD5 Violoation key
-    - code
-    - description
-
-Facts:
-- Citations
-    - ticket_number
-    - fine_amount
-    - Date_key
-    - TimeOfDay_key
-    - violation_key
-    - agency_key
-    - location_key
-    - meter_key
-    - vehicle_key
-
-- Occupancy
-    - occupancy_key
-    - meter_key
-    - Date_key
-    - TimeOfDay_key
-
-## Reading From S3
+## Reading From AWS S3
 
 __1. Create .env variables__
 
@@ -609,7 +543,7 @@ Run these in your Snowflake workspace. Because we're dealing with millions of ro
 
 Your Snowflake console should indicate something like `294 (chunks) s3://[bucket]/silver/[directory]/*.parquet LOADED 520000 ... etc` listing out all the chunks and total number of rows processed. 
 
-Aamzing, we're done with the Batch Processing phase now.
+Aamzing, we're done with the Batch Processing phase now. Our work with Apache Spark ends here for now. We'll be working with the dbt-snowflake adapter in the next Analytics Engineering section.
 
 ## Back to main
 
