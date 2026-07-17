@@ -24,8 +24,9 @@ I provide the step-by-step process of building an end-to-end data pipeline, star
 - [Data Warehouse on Snowflake](#data-warehouse-on-snowflake) (Goes to its own README)
 - [Batch processing with Apache Spark and PySpark](#batch-processing-with-apache-spark-and-pyspark) (Goes to its own README)
 - [Analytics Engineering and Modeling with Star Schema](#analytics-engineering-and-modeling-with-star-schema) (Goes to its own README)
-- [Coming Up: Data Analytics & Machine Learning](#coming-up-data-analytics--machine-learning)
-
+- [Dashboard](#dashboard)
+  - [Generate Categorical Chart](#generate-categorical-chart)
+  - [Generate Temporal Chart](#generate-temporal-chart)
 
 ## Workspace Setup
 
@@ -384,4 +385,53 @@ We implement analytics engineering with Star Schema by planning and creating dim
     - [Repeat with remaining dimension tables](/analytics-engineering/README.md#repeat-with-remaining-dimension-tables)
 - [Fact Tables](/analytics-engineering/README.md#fact-tables)
 
-## Coming Up: Data Analytics & Machine Learning
+## Dashboard
+
+We round out our end-to-end data engineering pipeline with a native Snowflake dashboard to visualize the fruits of our labor. We implement a simple dashboard solution is to show that the underlying storage, compute, and modeling layers operate successfully. 
+
+### Generate Categorical Chart
+
+1. Log into Snowflake
+2. Open a Project > Workspace
+3. Open a new SQL file (+ Add new > SQL file > dashboard.sql)
+4. Paste and run the following categorical query:
+
+```
+USE ROLE ACCOUNTADMIN;
+
+USE DATABASE ladot_warehouse;
+USE SCHEMA core;
+
+SELECT 
+    v.make AS vehicle_manufacturer,
+    COUNT(f.ticket_number) AS total_citations
+FROM fact_citation f
+JOIN dim_vehicle v 
+  ON f.vehicle_key = v.vehicle_key
+GROUP BY v.make
+ORDER BY total_citations DESC
+LIMIT 10;
+```
+
+You can re-write the query as you wish, experiment with different data output for analysis. Once you're ready to provide
+
+5. Click on the "Chart" tab in the Results panel for a chart view.
+
+![image](/dashboard/categorical-tile.png)
+
+### Generate Temporal Chart
+
+6. Paste, select, and run only this temporal SQL block to calculate daily citation timelines:
+
+```
+SELECT 
+    date_key AS citation_date,
+    COUNT(ticket_number) AS daily_ticket_volume
+FROM fact_citation
+GROUP BY date_key
+ORDER BY date_key ASC;
+```
+
+7. Click on the "Chart" tab in the Results panel for a chart view.
+
+![image](/dashboard/temporal-tile.png)
