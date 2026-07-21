@@ -351,8 +351,6 @@ We configure our data warehouse infrastructure with Snowflake, staged to connect
 
 ## Batch processing with Apache Spark and PySpark
 
-This section is in progress, but you can preview what I have set up so far:
-
 - [Overview](/batch-processing/README.md#overview)
     - [Batch vs Stream](/batch-processing/README.md#batch-vs-stream)
     - [Data Cleaning](/batch-processing/README.md#data-cleaning)
