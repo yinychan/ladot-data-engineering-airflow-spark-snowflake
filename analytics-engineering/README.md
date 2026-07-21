@@ -253,7 +253,7 @@ Done. PASS=3 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=3
 ...
 ```
 
-## Dimension Tables
+## Dimension Tables (Gold)
 
 Now that our staging views are established, we can start creating our [dimension tables](#dimension-and-fact-tables). We'll start with `dim_vehicle`.
 
@@ -356,7 +356,7 @@ dim_time_of_day.sql
 dim_violation.sql
 ```
 
-## Fact Tables
+## Fact Tables (Gold)
 
 While their purpose is to connect our dimension tables, we create them the same way:
 
